@@ -1,0 +1,56 @@
+plugins {
+    id 'application'
+    id 'io.freefair.lombok' version '8.6'
+    id "net.ltgt.errorprone" version '3.1.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+group = 'org.github.ehayik'
+version = '1.0-SNAPSHOT'
+description = 'nullaway-playground'
+
+application {
+    mainClass = 'org.github.ehayik.Main'
+}
+
+dependencies {
+    implementation(platform('org.springframework.boot:spring-boot-dependencies:3.2.2'))
+    implementation 'org.slf4j:slf4j-api'
+    implementation 'org.slf4j:slf4j-jdk14'
+
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+
+//    Optional, some source of nullability annotations.
+    compileOnly 'jakarta.annotation:jakarta.annotation-api'
+    annotationProcessor 'com.uber.nullaway:nullaway:0.10.22'
+
+    errorprone 'com.google.errorprone:error_prone_core:2.23.0'
+    errorprone 'com.uber.nullaway:nullaway:0.10.22'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+//-- NullAway
+import net.ltgt.gradle.errorprone.CheckSeverity
+
+tasks.withType(JavaCompile).configureEach {
+    // remove the if condition if you want to run NullAway on test code
+    if (!name.toLowerCase().contains("test")) {
+        options.errorprone {
+            check("NullAway", CheckSeverity.ERROR)
+            option("NullAway:AnnotatedPackages", "org.github.ehayik")
+        }
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
